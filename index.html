@@ -57,12 +57,25 @@
             align-items: center;
         }
         
-        .info-pessoa { display: flex; flex-direction: column; }
-        .nome-convidado { font-weight: bold; font-size: 16px; color: #333; }
-        .detalhes-convidado { font-size: 13px; color: #777; margin-top: 4px; }
+        .info-pessoa { display: flex; flex-direction: column; width: 80%; }
+        .nome-convidado { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 4px; }
         
+        /* Nova linha com detalhes flexíveis */
+        .linha-detalhes { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #666; }
+        
+        /* Etiqueta para o GA */
+        .badge-ga {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid #dee2e6;
+        }
+
         .btn-check {
-            width: 40px; height: 40px;
+            width: 40px; height: 40px; min-width: 40px; /* Garante que não amassa */
             border-radius: 50%;
             border: 2px solid #ddd;
             background: white;
@@ -82,7 +95,7 @@
     <header>
         <h2>Lista de Presença</h2>
         <div id="status">🔌 Conectando...</div>
-        <input type="text" id="pesquisa" placeholder="🔍 Buscar Nome ou Responsável..." onkeyup="renderizarTodasListas()">
+        <input type="text" id="pesquisa" placeholder="🔍 Buscar Nome, Responsável ou G.A." onkeyup="renderizarTodasListas()">
     </header>
 
     <div class="tabs">
@@ -106,7 +119,7 @@
             <input type="text" id="novoResponsavel" placeholder="Membro Responsável">
             <input type="text" id="novoNome" placeholder="Nome do Convidado *">
             <input type="tel" id="novoTelefone" placeholder="Telefone">
-            <input type="text" id="novoGA" placeholder="G.A.">
+            <input type="text" id="novoGA" placeholder="G.A. (Grupo de Assistência)">
             <button class="btn-add" onclick="adicionarPessoaPresente()">✅ Cadastrar e Confirmar</button>
         </div>
     </div>
@@ -174,30 +187,31 @@
         let contadorPresentes = 0;
 
         listaLocal.forEach((pessoa) => {
-            let textoBusca = (pessoa.nome + " " + pessoa.responsavel).toLowerCase();
+            // MUDANÇA NA PESQUISA: Agora inclui o G.A.
+            let textoBusca = (pessoa.nome + " " + pessoa.responsavel + " " + pessoa.ga).toLowerCase();
+            
             if (filtro && !textoBusca.includes(filtro)) return; 
 
             let li = document.createElement('li');
             
+            // HTML DO ITEM (Com a etiqueta do GA)
+            let conteudoItem = `
+                <div class="info-pessoa">
+                    <span class="nome-convidado">${pessoa.nome}</span>
+                    <div class="linha-detalhes">
+                        <span>Resp: ${pessoa.responsavel}</span>
+                        ${pessoa.ga !== "-" ? `<span class="badge-ga">GA: ${pessoa.ga}</span>` : ""}
+                    </div>
+                </div>
+            `;
+
             if (pessoa.presente) {
                 contadorPresentes++;
-                li.innerHTML = `
-                    <div class="info-pessoa">
-                        <span class="nome-convidado">${pessoa.nome}</span>
-                        <span class="detalhes-convidado">Resp: ${pessoa.responsavel}</span>
-                    </div>
-                    <button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>
-                `;
+                li.innerHTML = conteudoItem + `<button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>`;
                 ulPresentes.appendChild(li);
             } else {
                 contadorPendentes++;
-                li.innerHTML = `
-                    <div class="info-pessoa">
-                        <span class="nome-convidado">${pessoa.nome}</span>
-                        <span class="detalhes-convidado">Resp: ${pessoa.responsavel}</span>
-                    </div>
-                    <button class="btn-check" style="border-color: #28a745; color:#28a745" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>
-                `;
+                li.innerHTML = conteudoItem + `<button class="btn-check" style="border-color: #28a745; color:#28a745" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>`;
                 ulPendentes.appendChild(li);
             }
         });
@@ -249,27 +263,19 @@
         if(nomeAba === 'abaCadastro') botoes[2].classList.add('active');
     }
 
-    // --- 5. GERAR EXCEL (NOVO!) ---
+    // --- 5. GERAR EXCEL ---
     function gerarRelatorioExcel() {
-        // 1. Prepara os dados formatados para o Excel
         let dadosParaExcel = listaLocal.map(p => ({
             "Nome do Convidado": p.nome,
             "Responsável": p.responsavel,
-            "Telefone": p.telefone,
             "G.A.": p.ga,
+            "Telefone": p.telefone,
             "Status": p.presente ? "Confirmado" : "Pendente"
         }));
 
-        // 2. Cria uma nova planilha de trabalho (Worksheet)
         const ws = XLSX.utils.json_to_sheet(dadosParaExcel);
-
-        // 3. Cria um novo arquivo de Excel (Workbook)
         const wb = XLSX.utils.book_new();
-
-        // 4. Adiciona a planilha ao arquivo
         XLSX.utils.book_append_sheet(wb, ws, "Lista de Igreja");
-
-        // 5. Baixa o arquivo
         XLSX.writeFile(wb, "Relatorio_Presenca.xlsx");
     }
 </script>
