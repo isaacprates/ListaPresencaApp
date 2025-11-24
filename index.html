@@ -18,7 +18,7 @@
         .tabs { display: flex; border-bottom: 1px solid #ddd; background: #f8f9fa; }
         .tab-btn {
             flex: 1;
-            padding: 15px 5px; /* Reduzi um pouco o padding lateral para caber textos maiores */
+            padding: 15px 5px; 
             border: none;
             background: none;
             font-weight: bold;
@@ -34,7 +34,6 @@
             background: #fff;
         }
         
-        /* Conteúdo das abas */
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
 
@@ -43,7 +42,9 @@
         input[type="text"], input[type="tel"] { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         
         button.btn-add { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; background-color: #28a745; }
-        button.btn-report { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; background-color: #6c757d; margin-top: 20px; }
+        /* Botão verde do Excel */
+        button.btn-report { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; background-color: #217346; margin-top: 20px; font-weight: bold;}
+        button.btn-report:hover { background-color: #1e6b40; }
 
         /* --- LISTAS --- */
         ul { list-style-type: none; padding: 0; margin: 0; }
@@ -60,7 +61,6 @@
         .nome-convidado { font-weight: bold; font-size: 16px; color: #333; }
         .detalhes-convidado { font-size: 13px; color: #777; margin-top: 4px; }
         
-        /* Botões de Ação na Lista */
         .btn-check {
             width: 40px; height: 40px;
             border-radius: 50%;
@@ -71,10 +71,7 @@
             font-size: 20px; color: transparent;
             transition: 0.2s;
         }
-        /* Estilo quando está na aba de confirmados */
-        .btn-undo {
-            border-color: #dc3545; color: #dc3545;
-        }
+        .btn-undo { border-color: #dc3545; color: #dc3545; }
         .btn-check:hover { background-color: #f8f9fa; }
         
     </style>
@@ -85,20 +82,13 @@
     <header>
         <h2>Lista de Presença</h2>
         <div id="status">🔌 Conectando...</div>
-
         <input type="text" id="pesquisa" placeholder="🔍 Buscar Nome ou Responsável..." onkeyup="renderizarTodasListas()">
     </header>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="abrirAba('abaPendentes')" id="btnPendentes">
-            Convidados (0)
-        </button>
-        <button class="tab-btn" onclick="abrirAba('abaPresentes')" id="btnPresentes">
-            Presentes Confirmados (0)
-        </button>
-        <button class="tab-btn" onclick="abrirAba('abaCadastro')">
-            + Novo
-        </button>
+        <button class="tab-btn active" onclick="abrirAba('abaPendentes')" id="btnPendentes">Convidados (0)</button>
+        <button class="tab-btn" onclick="abrirAba('abaPresentes')" id="btnPresentes">Presentes Confirmados (0)</button>
+        <button class="tab-btn" onclick="abrirAba('abaCadastro')">+ Novo</button>
     </div>
 
     <div id="abaPendentes" class="tab-content active">
@@ -107,7 +97,7 @@
 
     <div id="abaPresentes" class="tab-content">
         <ul id="listaPresentes"></ul>
-        <button class="btn-report" onclick="gerarRelatorio()">📥 Baixar Relatório</button>
+        <button class="btn-report" onclick="gerarRelatorioExcel()">📊 Baixar Excel (.xlsx)</button>
     </div>
 
     <div id="abaCadastro" class="tab-content">
@@ -124,9 +114,10 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <script>
-    // --- 1. CONFIGURAÇÃO (Suas chaves) ---
+    // --- 1. CONFIGURAÇÃO (COLE SUAS CHAVES AQUI) ---
     const firebaseConfig = {
         apiKey: "AIzaSyAtNQFGCNwZuY633XknHJYGrEPsvbPU-rs",
         authDomain: "listapresencaapp-a80df.firebaseapp.com",
@@ -163,10 +154,7 @@
             });
         }
         
-        // Ordena por nome
         listaLocal.sort((a, b) => a.nome.localeCompare(b.nome));
-        
-        // Atualiza a tela
         renderizarTodasListas();
 
     }, (error) => {
@@ -186,16 +174,12 @@
         let contadorPresentes = 0;
 
         listaLocal.forEach((pessoa) => {
-            // Filtro de Pesquisa
             let textoBusca = (pessoa.nome + " " + pessoa.responsavel).toLowerCase();
-            if (filtro && !textoBusca.includes(filtro)) {
-                return; 
-            }
+            if (filtro && !textoBusca.includes(filtro)) return; 
 
             let li = document.createElement('li');
             
             if (pessoa.presente) {
-                // --- LISTA DE PRESENTES CONFIRMADOS ---
                 contadorPresentes++;
                 li.innerHTML = `
                     <div class="info-pessoa">
@@ -205,9 +189,7 @@
                     <button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>
                 `;
                 ulPresentes.appendChild(li);
-
             } else {
-                // --- LISTA DE CONVIDADOS ---
                 contadorPendentes++;
                 li.innerHTML = `
                     <div class="info-pessoa">
@@ -220,21 +202,16 @@
             }
         });
 
-        // --- ATUALIZAÇÃO DOS NOMES NAS ABAS (CONTADORES) ---
         document.getElementById('btnPendentes').innerText = `Convidados (${contadorPendentes})`;
         document.getElementById('btnPresentes').innerText = `Presentes Confirmados (${contadorPresentes})`;
 
-        // Mensagens se vazio
         if(ulPendentes.innerHTML === "") ulPendentes.innerHTML = '<p style="text-align:center; color:#ccc">Nenhum convidado pendente.</p>';
         if(ulPresentes.innerHTML === "") ulPresentes.innerHTML = '<p style="text-align:center; color:#ccc">Ninguém confirmado ainda.</p>';
     }
 
     // --- 4. FUNÇÕES DE INTERAÇÃO ---
-
     function alterarPresenca(id, statusAtual) {
-        db.ref('convidados/' + id).update({
-            presente: !statusAtual
-        });
+        db.ref('convidados/' + id).update({ presente: !statusAtual });
     }
 
     function adicionarPessoaPresente() {
@@ -246,48 +223,54 @@
         if (nome === "") { alert("Nome obrigatório!"); return; }
 
         dbRef.push({
-            responsavel: responsavel, nome: nome, telefone: telefone, ga: ga,
-            presente: true 
+            responsavel: responsavel, nome: nome, telefone: telefone, ga: ga, presente: true 
         });
 
-        // Limpa e avisa
         document.getElementById('novoNome').value = "";
         document.getElementById('novoTelefone').value = "";
         alert("Cadastrado! Veja na aba 'Presentes Confirmados'.");
         abrirAba('abaPresentes'); 
     }
 
-    // --- SISTEMA DE ABAS ---
     function abrirAba(nomeAba) {
         let conteudos = document.getElementsByClassName('tab-content');
         for (let i = 0; i < conteudos.length; i++) {
             conteudos[i].style.display = "none";
             conteudos[i].classList.remove('active');
         }
-        
         let botoes = document.getElementsByClassName('tab-btn');
         for (let i = 0; i < botoes.length; i++) {
             botoes[i].classList.remove('active');
         }
-
         document.getElementById(nomeAba).style.display = "block";
         document.getElementById(nomeAba).classList.add('active');
-
         if(nomeAba === 'abaPendentes') document.getElementById('btnPendentes').classList.add('active');
         if(nomeAba === 'abaPresentes') document.getElementById('btnPresentes').classList.add('active');
         if(nomeAba === 'abaCadastro') botoes[2].classList.add('active');
     }
 
-    function gerarRelatorio() {
-        let conteudoCSV = "Convidado,Responsavel,Status\n"; 
-        listaLocal.forEach(p => {
-            let status = p.presente ? "Presente" : "Pendente";
-            conteudoCSV += `${p.nome},${p.responsavel},${status}\n`;
-        });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([conteudoCSV], {type: 'text/csv;charset=utf-8;'}));
-        link.download = "lista_igreja_final.csv";
-        link.click();
+    // --- 5. GERAR EXCEL (NOVO!) ---
+    function gerarRelatorioExcel() {
+        // 1. Prepara os dados formatados para o Excel
+        let dadosParaExcel = listaLocal.map(p => ({
+            "Nome do Convidado": p.nome,
+            "Responsável": p.responsavel,
+            "Telefone": p.telefone,
+            "G.A.": p.ga,
+            "Status": p.presente ? "Confirmado" : "Pendente"
+        }));
+
+        // 2. Cria uma nova planilha de trabalho (Worksheet)
+        const ws = XLSX.utils.json_to_sheet(dadosParaExcel);
+
+        // 3. Cria um novo arquivo de Excel (Workbook)
+        const wb = XLSX.utils.book_new();
+
+        // 4. Adiciona a planilha ao arquivo
+        XLSX.utils.book_append_sheet(wb, ws, "Lista de Igreja");
+
+        // 5. Baixa o arquivo
+        XLSX.writeFile(wb, "Relatorio_Presenca.xlsx");
     }
 </script>
 
