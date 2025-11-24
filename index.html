@@ -3,56 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Presença (Online)</title>
+    <title>Controle de Convidados</title>
     <style>
-        /* --- ESTILO (Igual ao anterior) --- */
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h2 { text-align: center; color: #333; }
-        input[type="text"] { width: 70%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        /* --- ESTILO GERAL --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        
+        h2 { text-align: center; color: #444; margin-bottom: 5px; }
+        #status { font-size: 12px; color: #888; text-align: center; margin-bottom: 15px; }
+
+        /* --- ÁREA DE CADASTRO --- */
+        .form-group {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .form-group h3 { margin-top: 0; font-size: 16px; color: #555; }
+        
+        input[type="text"], input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box; 
+        }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .btn-add { background-color: #28a745; }
-        .btn-report { background-color: #007bff; width: 100%; margin-top: 10px;}
+        .btn-add:hover { background-color: #218838; }
+        .btn-report { background-color: #007bff; margin-top: 15px;}
+        
+        /* --- LISTA --- */
         ul { list-style-type: none; padding: 0; }
-        li { background: #fff; border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        li.presente { background-color: #d4edda; }
-        .controles { display: flex; gap: 5px; }
-        /* Status de conexão */
-        #status { font-size: 12px; color: #666; text-align: right; margin-bottom: 5px;}
+        li {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li.presente { background-color: #d1e7dd; border-left: 5px solid #198754; }
+        
+        .info-pessoa { display: flex; flex-direction: column; }
+        .nome-convidado { font-weight: bold; font-size: 16px; }
+        .detalhes-convidado { font-size: 12px; color: #666; margin-top: 2px; }
+        
+        /* Checkbox grande para facilitar no celular */
+        input[type="checkbox"] { transform: scale(1.5); margin-left: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <h2>📋 Lista de Convidados</h2>
     <div id="status">🔌 Conectando...</div>
-    <h2>☁️ Presença Online</h2>
 
-    <div class="controles">
-        <input type="text" id="novoNome" placeholder="Nome da nova pessoa...">
-        <button class="btn-add" onclick="adicionarPessoa()">Cadastrar</button>
+    <div class="form-group">
+        <h3>Cadastrar Nova Presença</h3>
+        <input type="text" id="novoResponsavel" placeholder="Membro Responsável">
+        <input type="text" id="novoNome" placeholder="Nome do Convidado *">
+        <input type="tel" id="novoTelefone" placeholder="Telefone">
+        <input type="text" id="novoGA" placeholder="G.A.">
+        <button class="btn-add" onclick="adicionarPessoaPresente()">✅ Cadastrar e Marcar Presença</button>
     </div>
 
     <hr>
 
-    <input type="text" id="pesquisa" placeholder="🔍 Pesquisar nome..." onkeyup="renderizarLista()" style="width: 95%;">
+    <input type="text" id="pesquisa" placeholder="🔍 Pesquisar convidado..." onkeyup="renderizarLista()" style="width: 100%; margin-bottom: 10px;">
 
     <ul id="listaNomes">
-        <p style="text-align:center; color:#999">Carregando dados...</p>
+        <p style="text-align:center; color:#999">Aguardando dados...</p>
     </ul>
 
-    <button class="btn-report" onclick="gerarRelatorio()">📥 Baixar Relatório</button>
+    <button class="btn-report" onclick="gerarRelatorio()">📥 Baixar Relatório Completo</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-    // 2. CONFIGURAÇÃO DO FIREBASE
-    // -------------------------------------------------------
-    // ATENÇÃO: Substitua o objeto abaixo pelas chaves que você copiou do console do Firebase!
-    // Mantenha o nome da variável como 'firebaseConfig'
-    // -------------------------------------------------------
-    
+    // --- 1. CONFIGURAÇÃO COM TUAS CHAVES ---
     const firebaseConfig = {
         apiKey: "AIzaSyAtNQFGCNwZuY633XknHJYGrEPsvbPU-rs",
         authDomain: "listapresencaapp-a80df.firebaseapp.com",
@@ -63,103 +97,136 @@
         appId: "1:391717293906:web:60f6a3f5213f4cf631f48b"
     };
 
-    // 3. INICIALIZAR O FIREBASE
+    // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database(); // Nossa referência ao banco de dados
-
-    // Variável local para guardar os dados e facilitar a pesquisa/relatório
+    const db = firebase.database();
+    
+    // Lista local para manipularmos os dados antes de desenhar na tela
     let listaLocal = [];
 
-    // 4. ESCUTAR O BANCO DE DADOS (Onde a mágica acontece)
-    // O '.on' fica vigiando. Se alguém mudar algo no banco, ele roda isso aqui na hora.
-    const dbRef = db.ref('pessoas');
+    // --- 2. ESCUTAR DADOS DO BANCO ---
+    // Estamos a olhar para a pasta 'convidados'
+    const dbRef = db.ref('convidados'); 
     
     dbRef.on('value', (snapshot) => {
-        document.getElementById('status').innerText = "🟢 Conectado e Sincronizado";
-        listaLocal = []; // Limpa a memória local
+        document.getElementById('status').innerText = "🟢 Sistema Online";
+        listaLocal = [];
         
-        // O Firebase devolve um Objeto, vamos converter para Lista
-        snapshot.forEach((childSnapshot) => {
-            let chave = childSnapshot.key; // O ID único (ex: -Nde7s8...)
-            let dados = childSnapshot.val(); // O nome e se está presente
-            
-            listaLocal.push({
-                id: chave,
-                nome: dados.nome,
-                presente: dados.presente
+        // Se houver dados, processamos cada um
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                let dados = childSnapshot.val();
+                // Monta o objeto com proteções para evitar erros se faltar algum campo
+                listaLocal.push({
+                    id: childSnapshot.key,
+                    nome: dados.nome || "Sem Nome",
+                    responsavel: dados.responsavel || "-",
+                    telefone: dados.telefone || "-",
+                    ga: dados.ga || "-",
+                    presente: dados.presente || false
+                });
             });
-        });
+        } else {
+            document.getElementById('listaNomes').innerHTML = '<p style="text-align:center">Nenhum convidado na lista ainda.</p>';
+            return;
+        }
 
-        // Atualiza a tela
+        // Ordenar alfabeticamente pelo nome do convidado
+        listaLocal.sort((a, b) => a.nome.localeCompare(b.nome));
+
         renderizarLista();
     }, (error) => {
         console.error(error);
-        document.getElementById('status').innerText = "🔴 Erro de conexão";
+        document.getElementById('status').innerText = "🔴 Erro de Permissão ou Conexão";
     });
 
+    // --- 3. ADICIONAR (JÁ COMO PRESENTE) ---
+    function adicionarPessoaPresente() {
+        let responsavel = document.getElementById('novoResponsavel').value.trim();
+        let nome = document.getElementById('novoNome').value.trim();
+        let telefone = document.getElementById('novoTelefone').value.trim();
+        let ga = document.getElementById('novoGA').value.trim();
 
-    // 5. FUNÇÃO: ADICIONAR (Manda para a nuvem)
-    function adicionarPessoa() {
-        let input = document.getElementById('novoNome');
-        let nome = input.value.trim();
-
-        if (nome !== "") {
-            // Empurra (.push) para o banco. O Firebase cria um ID único automático.
-            dbRef.push({
-                nome: nome,
-                presente: false
-            });
-            input.value = ""; 
-        } else {
-            alert("Digite um nome!");
+        if (nome === "") {
+            alert("O nome do convidado é obrigatório!");
+            return;
         }
+
+        // Envia para o Firebase
+        dbRef.push({
+            responsavel: responsavel,
+            nome: nome,
+            telefone: telefone,
+            ga: ga,
+            presente: true 
+        });
+
+        // Limpa os campos
+        document.getElementById('novoResponsavel').value = "";
+        document.getElementById('novoNome').value = "";
+        document.getElementById('novoTelefone').value = "";
+        document.getElementById('novoGA').value = "";
+        alert("Cadastrado com sucesso!");
     }
 
-    // 6. FUNÇÃO: RENDERIZAR (Desenha na tela usando a listaLocal)
+    // --- 4. RENDERIZAR LISTA NA TELA ---
     function renderizarLista() {
         let ul = document.getElementById('listaNomes');
         let filtro = document.getElementById('pesquisa').value.toLowerCase();
-        ul.innerHTML = ""; 
+        
+        // Se a lista estiver vazia (mas carregada), não limpa tudo violentamente
+        if(listaLocal.length > 0) ul.innerHTML = ""; 
+
+        let encontrouAlguem = false;
 
         listaLocal.forEach((pessoa) => {
             // Filtro de pesquisa
             if (filtro && !pessoa.nome.toLowerCase().includes(filtro)) {
                 return;
             }
+            encontrouAlguem = true;
 
             let li = document.createElement('li');
             if (pessoa.presente) li.classList.add('presente');
 
-            // Note que no 'onchange' passamos o ID único do Firebase
             li.innerHTML = `
-                <span>${pessoa.nome}</span>
+                <div class="info-pessoa">
+                    <span class="nome-convidado">${pessoa.nome}</span>
+                    <span class="detalhes-convidado">Resp: ${pessoa.responsavel} | GA: ${pessoa.ga}</span>
+                </div>
                 <input type="checkbox" ${pessoa.presente ? "checked" : ""} 
                  onchange="alterarPresenca('${pessoa.id}', ${pessoa.presente})">
             `;
             ul.appendChild(li);
         });
+        
+        if (!encontrouAlguem && filtro !== "") {
+             ul.innerHTML = '<p style="text-align:center">Ninguém encontrado com esse nome.</p>';
+        }
     }
 
-    // 7. FUNÇÃO: ALTERAR PRESENÇA (Atualiza na nuvem)
+    // --- 5. ALTERAR PRESENÇA (CHECKBOX) ---
     function alterarPresenca(id, statusAtual) {
-        // Vai no endereço específico daquela pessoa (pessoas/ID) e atualiza
-        db.ref('pessoas/' + id).update({
-            presente: !statusAtual // Inverte o status
+        // Atualiza apenas o campo 'presente' daquele ID específico
+        db.ref('convidados/' + id).update({
+            presente: !statusAtual
         });
     }
 
-    // 8. FUNÇÃO: RELATÓRIO (Igual ao anterior)
+    // --- 6. GERAR RELATÓRIO CSV ---
     function gerarRelatorio() {
-        let conteudoCSV = "Nome,Presença\n"; 
-        listaLocal.forEach(pessoa => {
-            let status = pessoa.presente ? "Presente" : "Ausente";
-            conteudoCSV += `${pessoa.nome},${status}\n`;
+        let conteudoCSV = "Convidado,Responsavel,Telefone,GA,Status\n"; 
+        listaLocal.forEach(p => {
+            let status = p.presente ? "Presente" : "Ausente";
+            // Tratamento simples para evitar erros se tiver vírgula no nome
+            let nomeLimpo = p.nome.replace(/,/g, ""); 
+            conteudoCSV += `${nomeLimpo},${p.responsavel},${p.telefone},${p.ga},${status}\n`;
         });
 
         let blob = new Blob([conteudoCSV], { type: 'text/csv;charset=utf-8;' });
         let link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "relatorio_online.csv";
+        link.download = "lista_final.csv";
         link.click();
     }
 </script>
