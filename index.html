@@ -3,90 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Convidados</title>
+    <title>Controle de Acesso</title>
     <style>
         /* --- ESTILO GERAL --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 10px; margin: 0; }
-        .container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        .container { background: white; padding: 0; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; overflow: hidden; }
         
-        h2 { text-align: center; color: #444; margin-bottom: 5px; }
-        #status { font-size: 12px; color: #888; text-align: center; margin-bottom: 15px; }
+        /* CABEÇALHO */
+        header { background-color: #fff; padding: 20px 20px 0 20px; }
+        h2 { text-align: center; color: #444; margin: 0 0 10px 0; }
+        #status { font-size: 12px; color: #888; text-align: center; margin-bottom: 15px; display: block;}
 
-        /* --- ÁREA DE CADASTRO --- */
-        .form-group {
-            background-color: #f8f9fa;
+        /* --- ABAS (TABS) --- */
+        .tabs { display: flex; border-bottom: 1px solid #ddd; background: #f8f9fa; }
+        .tab-btn {
+            flex: 1;
             padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            margin-bottom: 20px;
+            border: none;
+            background: none;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: 0.3s;
+            font-size: 14px;
         }
-        .form-group h3 { margin-top: 0; font-size: 16px; color: #555; }
-        
-        input[type="text"], input[type="tel"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box; 
+        .tab-btn.active {
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+            background: #fff;
         }
         
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        .btn-add { background-color: #28a745; }
-        .btn-add:hover { background-color: #218838; }
-        .btn-report { background-color: #007bff; margin-top: 15px;}
+        /* Conteúdo das abas */
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+
+        /* --- FORMULÁRIO --- */
+        .form-group { background-color: #f1f3f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        input[type="text"], input[type="tel"] { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         
-        /* --- LISTA --- */
-        ul { list-style-type: none; padding: 0; }
+        button.btn-add { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; background-color: #28a745; }
+        button.btn-report { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; background-color: #6c757d; margin-top: 20px; }
+
+        /* --- LISTAS --- */
+        ul { list-style-type: none; padding: 0; margin: 0; }
         li {
             background: #fff;
             border-bottom: 1px solid #eee;
-            padding: 12px;
+            padding: 15px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        li.presente { background-color: #d1e7dd; border-left: 5px solid #198754; }
         
         .info-pessoa { display: flex; flex-direction: column; }
-        .nome-convidado { font-weight: bold; font-size: 16px; }
-        .detalhes-convidado { font-size: 12px; color: #666; margin-top: 2px; }
+        .nome-convidado { font-weight: bold; font-size: 16px; color: #333; }
+        .detalhes-convidado { font-size: 13px; color: #777; margin-top: 4px; }
         
-        /* Checkbox grande para facilitar no celular */
-        input[type="checkbox"] { transform: scale(1.5); margin-left: 10px; }
+        /* Botões de Ação na Lista */
+        .btn-check {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background: white;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: transparent;
+            transition: 0.2s;
+        }
+        /* Estilo quando está na aba de confirmados */
+        .btn-undo {
+            border-color: #dc3545; color: #dc3545;
+        }
+        .btn-check:hover { background-color: #f8f9fa; }
+        
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📋 Lista de Convidados</h2>
-    <div id="status">🔌 Conectando...</div>
+    <header>
+        <h2>Controle de Acesso</h2>
+        <div id="status">🔌 Conectando...</div>
 
-    <div class="form-group">
-        <h3>Cadastrar Nova Presença</h3>
-        <input type="text" id="novoResponsavel" placeholder="Membro Responsável">
-        <input type="text" id="novoNome" placeholder="Nome do Convidado *">
-        <input type="tel" id="novoTelefone" placeholder="Telefone">
-        <input type="text" id="novoGA" placeholder="G.A.">
-        <button class="btn-add" onclick="adicionarPessoaPresente()">✅ Cadastrar e Marcar Presença</button>
+        <input type="text" id="pesquisa" placeholder="🔍 Buscar Nome ou Responsável..." onkeyup="renderizarTodasListas()">
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="abrirAba('abaPendentes')" id="btnPendentes">
+            A Chegar (0)
+        </button>
+        <button class="tab-btn" onclick="abrirAba('abaPresentes')" id="btnPresentes">
+            Já Entraram (0)
+        </button>
+        <button class="tab-btn" onclick="abrirAba('abaCadastro')">
+            + Novo
+        </button>
     </div>
 
-    <hr>
+    <div id="abaPendentes" class="tab-content active">
+        <ul id="listaPendentes"></ul>
+    </div>
 
-    <input type="text" id="pesquisa" placeholder="🔍 Pesquisar convidado..." onkeyup="renderizarLista()" style="width: 100%; margin-bottom: 10px;">
+    <div id="abaPresentes" class="tab-content">
+        <ul id="listaPresentes"></ul>
+        <button class="btn-report" onclick="gerarRelatorio()">📥 Baixar Relatório</button>
+    </div>
 
-    <ul id="listaNomes">
-        <p style="text-align:center; color:#999">Aguardando dados...</p>
-    </ul>
-
-    <button class="btn-report" onclick="gerarRelatorio()">📥 Baixar Relatório Completo</button>
+    <div id="abaCadastro" class="tab-content">
+        <div class="form-group">
+            <h3>Cadastrar Novo (Já entra validado)</h3>
+            <input type="text" id="novoResponsavel" placeholder="Membro Responsável">
+            <input type="text" id="novoNome" placeholder="Nome do Convidado *">
+            <input type="tel" id="novoTelefone" placeholder="Telefone">
+            <input type="text" id="novoGA" placeholder="G.A.">
+            <button class="btn-add" onclick="adicionarPessoaPresente()">✅ Cadastrar e Confirmar</button>
+        </div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-    // --- 1. CONFIGURAÇÃO COM TUAS CHAVES ---
+    // --- 1. CONFIGURAÇÃO ---
     const firebaseConfig = {
         apiKey: "AIzaSyAtNQFGCNwZuY633XknHJYGrEPsvbPU-rs",
         authDomain: "listapresencaapp-a80df.firebaseapp.com",
@@ -97,26 +137,21 @@
         appId: "1:391717293906:web:60f6a3f5213f4cf631f48b"
     };
 
-    // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // Lista local para manipularmos os dados antes de desenhar na tela
     let listaLocal = [];
 
-    // --- 2. ESCUTAR DADOS DO BANCO ---
-    // Estamos a olhar para a pasta 'convidados'
+    // --- 2. ESCUTAR DADOS ---
     const dbRef = db.ref('convidados'); 
     
     dbRef.on('value', (snapshot) => {
         document.getElementById('status').innerText = "🟢 Sistema Online";
         listaLocal = [];
         
-        // Se houver dados, processamos cada um
         if (snapshot.exists()) {
             snapshot.forEach((childSnapshot) => {
                 let dados = childSnapshot.val();
-                // Monta o objeto com proteções para evitar erros se faltar algum campo
                 listaLocal.push({
                     id: childSnapshot.key,
                     nome: dados.nome || "Sem Nome",
@@ -126,106 +161,137 @@
                     presente: dados.presente || false
                 });
             });
-        } else {
-            document.getElementById('listaNomes').innerHTML = '<p style="text-align:center">Nenhum convidado na lista ainda.</p>';
-            return;
         }
-
-        // Ordenar alfabeticamente pelo nome do convidado
+        
+        // Ordena por nome
         listaLocal.sort((a, b) => a.nome.localeCompare(b.nome));
+        
+        // Atualiza a tela
+        renderizarTodasListas();
 
-        renderizarLista();
     }, (error) => {
-        console.error(error);
-        document.getElementById('status').innerText = "🔴 Erro de Permissão ou Conexão";
+        document.getElementById('status').innerText = "🔴 Erro de Conexão";
     });
 
-    // --- 3. ADICIONAR (JÁ COMO PRESENTE) ---
+    // --- 3. RENDERIZAR LISTAS (Separando os grupos) ---
+    function renderizarTodasListas() {
+        let ulPendentes = document.getElementById('listaPendentes');
+        let ulPresentes = document.getElementById('listaPresentes');
+        let filtro = document.getElementById('pesquisa').value.toLowerCase();
+
+        ulPendentes.innerHTML = "";
+        ulPresentes.innerHTML = "";
+
+        let contadorPendentes = 0;
+        let contadorPresentes = 0;
+
+        listaLocal.forEach((pessoa) => {
+            // Filtro de Pesquisa (Busca em Nome ou Responsável)
+            let textoBusca = (pessoa.nome + " " + pessoa.responsavel).toLowerCase();
+            if (filtro && !textoBusca.includes(filtro)) {
+                return; // Pula se não bater com a pesquisa
+            }
+
+            // Cria o item da lista
+            let li = document.createElement('li');
+            
+            if (pessoa.presente) {
+                // --- LISTA DE PRESENTES (Botão vermelho para desfazer) ---
+                contadorPresentes++;
+                li.innerHTML = `
+                    <div class="info-pessoa">
+                        <span class="nome-convidado">${pessoa.nome}</span>
+                        <span class="detalhes-convidado">Resp: ${pessoa.responsavel}</span>
+                    </div>
+                    <button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>
+                `;
+                ulPresentes.appendChild(li);
+
+            } else {
+                // --- LISTA DE PENDENTES (Botão verde para confirmar) ---
+                contadorPendentes++;
+                li.innerHTML = `
+                    <div class="info-pessoa">
+                        <span class="nome-convidado">${pessoa.nome}</span>
+                        <span class="detalhes-convidado">Resp: ${pessoa.responsavel}</span>
+                    </div>
+                    <button class="btn-check" style="border-color: #28a745; color:#28a745" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>
+                `;
+                ulPendentes.appendChild(li);
+            }
+        });
+
+        // Atualiza os números nas abas
+        document.getElementById('btnPendentes').innerText = `A Chegar (${contadorPendentes})`;
+        document.getElementById('btnPresentes').innerText = `Já Entraram (${contadorPresentes})`;
+
+        // Mensagens se vazio
+        if(ulPendentes.innerHTML === "") ulPendentes.innerHTML = '<p style="text-align:center; color:#ccc">Ninguém nesta lista.</p>';
+        if(ulPresentes.innerHTML === "") ulPresentes.innerHTML = '<p style="text-align:center; color:#ccc">Ninguém entrou ainda.</p>';
+    }
+
+    // --- 4. FUNÇÕES DE INTERAÇÃO ---
+
+    function alterarPresenca(id, statusAtual) {
+        // Se statusAtual é true (presente), vira false. Se é false, vira true.
+        db.ref('convidados/' + id).update({
+            presente: !statusAtual
+        });
+    }
+
     function adicionarPessoaPresente() {
         let responsavel = document.getElementById('novoResponsavel').value.trim();
         let nome = document.getElementById('novoNome').value.trim();
         let telefone = document.getElementById('novoTelefone').value.trim();
         let ga = document.getElementById('novoGA').value.trim();
 
-        if (nome === "") {
-            alert("O nome do convidado é obrigatório!");
-            return;
-        }
+        if (nome === "") { alert("Nome obrigatório!"); return; }
 
-        // Envia para o Firebase
         dbRef.push({
-            responsavel: responsavel,
-            nome: nome,
-            telefone: telefone,
-            ga: ga,
+            responsavel: responsavel, nome: nome, telefone: telefone, ga: ga,
             presente: true 
         });
 
-        // Limpa os campos
-        document.getElementById('novoResponsavel').value = "";
+        // Limpa e avisa
         document.getElementById('novoNome').value = "";
         document.getElementById('novoTelefone').value = "";
-        document.getElementById('novoGA').value = "";
-        alert("Cadastrado com sucesso!");
+        alert("Cadastrado! Veja na aba 'Já Entraram'.");
+        abrirAba('abaPresentes'); // Leva o usuário para a lista de presentes
     }
 
-    // --- 4. RENDERIZAR LISTA NA TELA ---
-    function renderizarLista() {
-        let ul = document.getElementById('listaNomes');
-        let filtro = document.getElementById('pesquisa').value.toLowerCase();
-        
-        // Se a lista estiver vazia (mas carregada), não limpa tudo violentamente
-        if(listaLocal.length > 0) ul.innerHTML = ""; 
-
-        let encontrouAlguem = false;
-
-        listaLocal.forEach((pessoa) => {
-            // Filtro de pesquisa
-            if (filtro && !pessoa.nome.toLowerCase().includes(filtro)) {
-                return;
-            }
-            encontrouAlguem = true;
-
-            let li = document.createElement('li');
-            if (pessoa.presente) li.classList.add('presente');
-
-            li.innerHTML = `
-                <div class="info-pessoa">
-                    <span class="nome-convidado">${pessoa.nome}</span>
-                    <span class="detalhes-convidado">Resp: ${pessoa.responsavel} | GA: ${pessoa.ga}</span>
-                </div>
-                <input type="checkbox" ${pessoa.presente ? "checked" : ""} 
-                 onchange="alterarPresenca('${pessoa.id}', ${pessoa.presente})">
-            `;
-            ul.appendChild(li);
-        });
-        
-        if (!encontrouAlguem && filtro !== "") {
-             ul.innerHTML = '<p style="text-align:center">Ninguém encontrado com esse nome.</p>';
+    // --- SISTEMA DE ABAS ---
+    function abrirAba(nomeAba) {
+        // Esconde todos
+        let conteudos = document.getElementsByClassName('tab-content');
+        for (let i = 0; i < conteudos.length; i++) {
+            conteudos[i].style.display = "none";
+            conteudos[i].classList.remove('active');
         }
+        
+        // Tira o destaque dos botões
+        let botoes = document.getElementsByClassName('tab-btn');
+        for (let i = 0; i < botoes.length; i++) {
+            botoes[i].classList.remove('active');
+        }
+
+        // Mostra o certo
+        document.getElementById(nomeAba).style.display = "block";
+        document.getElementById(nomeAba).classList.add('active');
+
+        // Destaca o botão certo
+        if(nomeAba === 'abaPendentes') document.getElementById('btnPendentes').classList.add('active');
+        if(nomeAba === 'abaPresentes') document.getElementById('btnPresentes').classList.add('active');
+        if(nomeAba === 'abaCadastro') botoes[2].classList.add('active'); // Botão + Novo
     }
 
-    // --- 5. ALTERAR PRESENÇA (CHECKBOX) ---
-    function alterarPresenca(id, statusAtual) {
-        // Atualiza apenas o campo 'presente' daquele ID específico
-        db.ref('convidados/' + id).update({
-            presente: !statusAtual
-        });
-    }
-
-    // --- 6. GERAR RELATÓRIO CSV ---
     function gerarRelatorio() {
-        let conteudoCSV = "Convidado,Responsavel,Telefone,GA,Status\n"; 
+        let conteudoCSV = "Convidado,Responsavel,Status\n"; 
         listaLocal.forEach(p => {
             let status = p.presente ? "Presente" : "Ausente";
-            // Tratamento simples para evitar erros se tiver vírgula no nome
-            let nomeLimpo = p.nome.replace(/,/g, ""); 
-            conteudoCSV += `${nomeLimpo},${p.responsavel},${p.telefone},${p.ga},${status}\n`;
+            conteudoCSV += `${p.nome},${p.responsavel},${status}\n`;
         });
-
-        let blob = new Blob([conteudoCSV], { type: 'text/csv;charset=utf-8;' });
         let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
+        link.href = URL.createObjectURL(new Blob([conteudoCSV], {type: 'text/csv;charset=utf-8;'}));
         link.download = "lista_final.csv";
         link.click();
     }
