@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Presença (Online)</title>
+    <style>
+        /* --- ESTILO (Igual ao anterior) --- */
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { text-align: center; color: #333; }
+        input[type="text"] { width: 70%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-add { background-color: #28a745; }
+        .btn-report { background-color: #007bff; width: 100%; margin-top: 10px;}
+        ul { list-style-type: none; padding: 0; }
+        li { background: #fff; border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        li.presente { background-color: #d4edda; }
+        .controles { display: flex; gap: 5px; }
+        /* Status de conexão */
+        #status { font-size: 12px; color: #666; text-align: right; margin-bottom: 5px;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="status">🔌 Conectando...</div>
+    <h2>☁️ Presença Online</h2>
+
+    <div class="controles">
+        <input type="text" id="novoNome" placeholder="Nome da nova pessoa...">
+        <button class="btn-add" onclick="adicionarPessoa()">Cadastrar</button>
+    </div>
+
+    <hr>
+
+    <input type="text" id="pesquisa" placeholder="🔍 Pesquisar nome..." onkeyup="renderizarLista()" style="width: 95%;">
+
+    <ul id="listaNomes">
+        <p style="text-align:center; color:#999">Carregando dados...</p>
+    </ul>
+
+    <button class="btn-report" onclick="gerarRelatorio()">📥 Baixar Relatório</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+    // 2. CONFIGURAÇÃO DO FIREBASE
+    // -------------------------------------------------------
+    // ATENÇÃO: Substitua o objeto abaixo pelas chaves que você copiou do console do Firebase!
+    // Mantenha o nome da variável como 'firebaseConfig'
+    // -------------------------------------------------------
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyAtNQFGCNwZuY633XknHJYGrEPsvbPU-rs",
+        authDomain: "listapresencaapp-a80df.firebaseapp.com",
+        databaseURL: "https://listapresencaapp-a80df-default-rtdb.firebaseio.com",
+        projectId: "listapresencaapp-a80df",
+        storageBucket: "listapresencaapp-a80df.firebasestorage.app",
+        messagingSenderId: "391717293906",
+        appId: "1:391717293906:web:60f6a3f5213f4cf631f48b"
+    };
+
+    // 3. INICIALIZAR O FIREBASE
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database(); // Nossa referência ao banco de dados
+
+    // Variável local para guardar os dados e facilitar a pesquisa/relatório
+    let listaLocal = [];
+
+    // 4. ESCUTAR O BANCO DE DADOS (Onde a mágica acontece)
+    // O '.on' fica vigiando. Se alguém mudar algo no banco, ele roda isso aqui na hora.
+    const dbRef = db.ref('pessoas');
+    
+    dbRef.on('value', (snapshot) => {
+        document.getElementById('status').innerText = "🟢 Conectado e Sincronizado";
+        listaLocal = []; // Limpa a memória local
+        
+        // O Firebase devolve um Objeto, vamos converter para Lista
+        snapshot.forEach((childSnapshot) => {
+            let chave = childSnapshot.key; // O ID único (ex: -Nde7s8...)
+            let dados = childSnapshot.val(); // O nome e se está presente
+            
+            listaLocal.push({
+                id: chave,
+                nome: dados.nome,
+                presente: dados.presente
+            });
+        });
+
+        // Atualiza a tela
+        renderizarLista();
+    }, (error) => {
+        console.error(error);
+        document.getElementById('status').innerText = "🔴 Erro de conexão";
+    });
+
+
+    // 5. FUNÇÃO: ADICIONAR (Manda para a nuvem)
+    function adicionarPessoa() {
+        let input = document.getElementById('novoNome');
+        let nome = input.value.trim();
+
+        if (nome !== "") {
+            // Empurra (.push) para o banco. O Firebase cria um ID único automático.
+            dbRef.push({
+                nome: nome,
+                presente: false
+            });
+            input.value = ""; 
+        } else {
+            alert("Digite um nome!");
+        }
+    }
+
+    // 6. FUNÇÃO: RENDERIZAR (Desenha na tela usando a listaLocal)
+    function renderizarLista() {
+        let ul = document.getElementById('listaNomes');
+        let filtro = document.getElementById('pesquisa').value.toLowerCase();
+        ul.innerHTML = ""; 
+
+        listaLocal.forEach((pessoa) => {
+            // Filtro de pesquisa
+            if (filtro && !pessoa.nome.toLowerCase().includes(filtro)) {
+                return;
+            }
+
+            let li = document.createElement('li');
+            if (pessoa.presente) li.classList.add('presente');
+
+            // Note que no 'onchange' passamos o ID único do Firebase
+            li.innerHTML = `
+                <span>${pessoa.nome}</span>
+                <input type="checkbox" ${pessoa.presente ? "checked" : ""} 
+                 onchange="alterarPresenca('${pessoa.id}', ${pessoa.presente})">
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    // 7. FUNÇÃO: ALTERAR PRESENÇA (Atualiza na nuvem)
+    function alterarPresenca(id, statusAtual) {
+        // Vai no endereço específico daquela pessoa (pessoas/ID) e atualiza
+        db.ref('pessoas/' + id).update({
+            presente: !statusAtual // Inverte o status
+        });
+    }
+
+    // 8. FUNÇÃO: RELATÓRIO (Igual ao anterior)
+    function gerarRelatorio() {
+        let conteudoCSV = "Nome,Presença\n"; 
+        listaLocal.forEach(pessoa => {
+            let status = pessoa.presente ? "Presente" : "Ausente";
+            conteudoCSV += `${pessoa.nome},${status}\n`;
+        });
+
+        let blob = new Blob([conteudoCSV], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "relatorio_online.csv";
+        link.click();
+    }
+</script>
+
+</body>
+</html>
