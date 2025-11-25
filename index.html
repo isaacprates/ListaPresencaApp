@@ -35,7 +35,7 @@
         ul { list-style-type: none; padding: 0; margin: 0; }
         li { background: #fff; border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        .info-pessoa { display: flex; flex-direction: column; flex: 1; padding-right: 10px;}
+        .info-pessoa { display: flex; flex-direction: column; flex: 1; padding-right: 5px;}
         .nome-convidado { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 4px; }
         
         .linha-detalhes { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #666; }
@@ -44,18 +44,23 @@
         .badge-ga { background-color: #e9ecef; color: #495057; }
         .badge-tel { background-color: #e3f2fd; color: #0d6efd; border-color: #b6d4fe; }
 
-        .acoes-btn { display: flex; gap: 8px; align-items: center; }
+        .acoes-btn { display: flex; gap: 5px; align-items: center; }
 
-        .btn-check, .btn-edit {
-            width: 38px; height: 38px; min-width: 38px;
+        /* Estilo dos Botões Redondos */
+        .btn-circle {
+            width: 36px; height: 36px; min-width: 36px;
             border-radius: 50%; border: 2px solid #ddd;
             background: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; transition: 0.2s;
+            font-size: 16px; transition: 0.2s;
         }
-        .btn-edit { border-color: #ffc107; color: #d39e00; font-size: 16px; } 
-        .btn-undo { border-color: #dc3545; color: #dc3545; }
-        .btn-check-green { border-color: #28a745; color: #28a745; }
+        
+        .btn-edit { border-color: #ffc107; color: #d39e00; } 
+        .btn-delete { border-color: #dc3545; color: #dc3545; } 
+        .btn-delete:hover { background-color: #fff5f5; }
+        
+        .btn-undo { border-color: #6c757d; color: #6c757d; font-size: 18px;} /* Desfazer cinza para não confundir com deletar */
+        .btn-check-green { border-color: #28a745; color: #28a745; font-size: 18px;}
         
         /* --- MODAL (JANELA DE EDIÇÃO) --- */
         .modal {
@@ -163,11 +168,8 @@
             snapshot.forEach((childSnapshot) => {
                 let dados = childSnapshot.val();
                 
-                // --- CORREÇÃO AQUI ---
-                // Verifica se está escrito 'telefone' OU 'Telefone' OU 'celular' (por precaução)
+                // Tratamento de maiúsculas/minúsculas
                 let telefoneEncontrado = dados.telefone || dados.Telefone || dados.celular || dados.Celular || "";
-                
-                // Mesma verificação para os outros campos, por garantia
                 let nomeEncontrado = dados.nome || dados.Nome || "Sem Nome";
                 let responsavelEncontrado = dados.responsavel || dados.Responsavel || dados.Responsável || "-";
                 let gaEncontrado = dados.ga || dados.GA || dados.Ga || "-";
@@ -208,7 +210,6 @@
 
             let li = document.createElement('li');
             
-            // Renderiza o telefone se existir
             let htmlTelefone = "";
             if(pessoa.telefone && pessoa.telefone !== "") {
                 htmlTelefone = `<span class="badge badge-tel">📞 ${pessoa.telefone}</span>`;
@@ -230,13 +231,22 @@
                 </div>
             `;
 
+            // --- BOTOES COM A NOVA LIXEIRA ---
             let botoesHtml = "";
+            
+            // Botão de Excluir (Comum aos dois)
+            let btnDelete = `<button class="btn-circle btn-delete" onclick="excluirPessoa('${pessoa.id}', '${pessoa.nome}')">🗑️</button>`;
+            
+            // Botão de Editar (Comum aos dois)
+            let btnEdit = `<button class="btn-circle btn-edit" onclick="abrirModalEdicao('${pessoa.id}')">✏️</button>`;
+
             if (pessoa.presente) {
                 contadorPresentes++;
                 botoesHtml = `
                     <div class="acoes-btn">
-                        <button class="btn-edit" onclick="abrirModalEdicao('${pessoa.id}')">✏️</button>
-                        <button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>
+                        ${btnDelete}
+                        ${btnEdit}
+                        <button class="btn-circle btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>
                     </div>
                 `;
                 li.innerHTML = infoHtml + botoesHtml;
@@ -245,8 +255,9 @@
                 contadorPendentes++;
                 botoesHtml = `
                     <div class="acoes-btn">
-                        <button class="btn-edit" onclick="abrirModalEdicao('${pessoa.id}')">✏️</button>
-                        <button class="btn-check btn-check-green" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>
+                        ${btnDelete}
+                        ${btnEdit}
+                        <button class="btn-circle btn-check-green" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>
                     </div>
                 `;
                 li.innerHTML = infoHtml + botoesHtml;
@@ -262,6 +273,20 @@
     }
 
     // --- FUNÇÕES DE LÓGICA ---
+    
+    // EXCLUIR (NOVA FUNÇÃO)
+    function excluirPessoa(id, nome) {
+        if (confirm(`⚠️ Tem certeza que deseja excluir "${nome}" da lista? Isso não pode ser desfeito.`)) {
+            db.ref('convidados/' + id).remove()
+            .then(() => {
+                // Não precisa de alert, a lista atualiza sozinha
+            })
+            .catch((error) => {
+                alert("Erro ao excluir: " + error.message);
+            });
+        }
+    }
+
     function alterarPresenca(id, statusAtual) {
         db.ref('convidados/' + id).update({ presente: !statusAtual });
     }
@@ -324,7 +349,6 @@
         let ga = document.getElementById('editGA').value;
         if(nome.trim() === "") { alert("Nome obrigatório."); return; }
 
-        // Salva tudo minúsculo para padronizar daqui pra frente
         db.ref('convidados/' + id).update({
             nome: nome, responsavel: responsavel, telefone: telefone, ga: ga
         }, (error) => {
