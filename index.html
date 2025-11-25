@@ -7,7 +7,7 @@
     <style>
         /* --- ESTILO GERAL --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 10px; margin: 0; }
-        .container { background: white; padding: 0; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; overflow: hidden; }
+        .container { background: white; padding: 0; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; overflow: hidden; position: relative; }
         
         /* CABEÇALHO */
         header { background-color: #fff; padding: 20px 20px 0 20px; }
@@ -17,76 +17,66 @@
         /* --- ABAS (TABS) --- */
         .tabs { display: flex; border-bottom: 1px solid #ddd; background: #f8f9fa; }
         .tab-btn {
-            flex: 1;
-            padding: 15px 5px; 
-            border: none;
-            background: none;
-            font-weight: bold;
-            color: #666;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: 0.3s;
-            font-size: 14px;
+            flex: 1; padding: 15px 5px; border: none; background: none; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 14px;
         }
-        .tab-btn.active {
-            color: #007bff;
-            border-bottom: 3px solid #007bff;
-            background: #fff;
-        }
+        .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; background: #fff; }
         
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
 
-        /* --- FORMULÁRIO --- */
+        /* --- FORMULÁRIO GERAL --- */
         .form-group { background-color: #f1f3f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         input[type="text"], input[type="tel"] { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         
         button.btn-add { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; background-color: #28a745; }
-        /* Botão verde do Excel */
         button.btn-report { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; background-color: #217346; margin-top: 20px; font-weight: bold;}
-        button.btn-report:hover { background-color: #1e6b40; }
-
+        
         /* --- LISTAS --- */
         ul { list-style-type: none; padding: 0; margin: 0; }
-        li {
-            background: #fff;
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        li { background: #fff; border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        .info-pessoa { display: flex; flex-direction: column; width: 80%; }
+        .info-pessoa { display: flex; flex-direction: column; flex: 1; padding-right: 10px;} /* Flex 1 para ocupar espaço sobrando */
         .nome-convidado { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 4px; }
         
-        /* Nova linha com detalhes flexíveis */
-        .linha-detalhes { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #666; }
+        .linha-detalhes { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #666; }
         
-        /* Etiqueta para o GA */
-        .badge-ga {
-            background-color: #e9ecef;
-            color: #495057;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            border: 1px solid #dee2e6;
-        }
+        .badge { padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid #dee2e6; display: inline-block;}
+        .badge-ga { background-color: #e9ecef; color: #495057; }
+        .badge-tel { background-color: #e3f2fd; color: #0d6efd; border-color: #b6d4fe; }
 
-        .btn-check {
-            width: 40px; height: 40px; min-width: 40px; /* Garante que não amassa */
-            border-radius: 50%;
-            border: 2px solid #ddd;
-            background: white;
-            cursor: pointer;
+        /* Grupo de Botoes na Lista (Ações) */
+        .acoes-btn { display: flex; gap: 8px; align-items: center; }
+
+        .btn-check, .btn-edit {
+            width: 38px; height: 38px; min-width: 38px;
+            border-radius: 50%; border: 2px solid #ddd;
+            background: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: transparent;
-            transition: 0.2s;
+            font-size: 18px; transition: 0.2s;
         }
+        .btn-edit { border-color: #ffc107; color: #d39e00; font-size: 16px; } /* Botão Lápis Amarelo */
         .btn-undo { border-color: #dc3545; color: #dc3545; }
-        .btn-check:hover { background-color: #f8f9fa; }
+        .btn-check-green { border-color: #28a745; color: #28a745; }
         
+        /* --- MODAL (JANELA DE EDIÇÃO) --- */
+        .modal {
+            display: none; /* Escondido por padrão */
+            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); /* Fundo preto transparente */
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: white; padding: 20px; border-radius: 12px;
+            width: 90%; max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s;
+        }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-cancel { background-color: #6c757d; color: white; flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;}
+        .btn-save { background-color: #007bff; color: white; flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;}
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
@@ -119,8 +109,30 @@
             <input type="text" id="novoResponsavel" placeholder="Membro Responsável">
             <input type="text" id="novoNome" placeholder="Nome do Convidado *">
             <input type="tel" id="novoTelefone" placeholder="Telefone">
-            <input type="text" id="novoGA" placeholder="G.A. (Grupo de Assistência)">
+            <input type="text" id="novoGA" placeholder="G.A.">
             <button class="btn-add" onclick="adicionarPessoaPresente()">✅ Cadastrar e Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:#333">✏️ Editar Convidado</h3>
+        <input type="hidden" id="editId"> <label style="font-size:12px; color:#666">Nome do Convidado</label>
+        <input type="text" id="editNome">
+        
+        <label style="font-size:12px; color:#666">Responsável</label>
+        <input type="text" id="editResponsavel">
+        
+        <label style="font-size:12px; color:#666">Telefone</label>
+        <input type="tel" id="editTelefone">
+        
+        <label style="font-size:12px; color:#666">G.A.</label>
+        <input type="text" id="editGA">
+
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+            <button class="btn-save" onclick="salvarEdicao()">Salvar Alterações</button>
         </div>
     </div>
 </div>
@@ -130,7 +142,7 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <script>
-    // --- 1. CONFIGURAÇÃO (COLE SUAS CHAVES AQUI) ---
+    // --- 1. CONFIGURAÇÃO ---
     const firebaseConfig = {
         apiKey: "AIzaSyAtNQFGCNwZuY633XknHJYGrEPsvbPU-rs",
         authDomain: "listapresencaapp-a80df.firebaseapp.com",
@@ -160,7 +172,7 @@
                     id: childSnapshot.key,
                     nome: dados.nome || "Sem Nome",
                     responsavel: dados.responsavel || "-",
-                    telefone: dados.telefone || "-",
+                    telefone: dados.telefone || "",
                     ga: dados.ga || "-",
                     presente: dados.presente || false
                 });
@@ -174,7 +186,7 @@
         document.getElementById('status').innerText = "🔴 Erro de Conexão";
     });
 
-    // --- 3. RENDERIZAR LISTAS ---
+    // --- 3. RENDERIZAR LISTAS (Agora com Telefone e Botão Editar) ---
     function renderizarTodasListas() {
         let ulPendentes = document.getElementById('listaPendentes');
         let ulPresentes = document.getElementById('listaPresentes');
@@ -187,31 +199,49 @@
         let contadorPresentes = 0;
 
         listaLocal.forEach((pessoa) => {
-            // MUDANÇA NA PESQUISA: Agora inclui o G.A.
             let textoBusca = (pessoa.nome + " " + pessoa.responsavel + " " + pessoa.ga).toLowerCase();
-            
             if (filtro && !textoBusca.includes(filtro)) return; 
 
             let li = document.createElement('li');
             
-            // HTML DO ITEM (Com a etiqueta do GA)
-            let conteudoItem = `
+            // Tratamento visual para o telefone
+            let htmlTelefone = pessoa.telefone ? `<span class="badge badge-tel">📞 ${pessoa.telefone}</span>` : "";
+            let htmlGA = pessoa.ga !== "-" ? `<span class="badge badge-ga">GA: ${pessoa.ga}</span>` : "";
+
+            // HTML DA INFORMAÇÃO
+            let infoHtml = `
                 <div class="info-pessoa">
                     <span class="nome-convidado">${pessoa.nome}</span>
                     <div class="linha-detalhes">
                         <span>Resp: ${pessoa.responsavel}</span>
-                        ${pessoa.ga !== "-" ? `<span class="badge-ga">GA: ${pessoa.ga}</span>` : ""}
+                        ${htmlGA}
+                        ${htmlTelefone}
                     </div>
                 </div>
             `;
 
+            // BOTÕES DE AÇÃO (EDITAR + CHECK)
+            let botoesHtml = "";
+            
             if (pessoa.presente) {
                 contadorPresentes++;
-                li.innerHTML = conteudoItem + `<button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>`;
+                botoesHtml = `
+                    <div class="acoes-btn">
+                        <button class="btn-edit" onclick="abrirModalEdicao('${pessoa.id}')">✏️</button>
+                        <button class="btn-check btn-undo" onclick="alterarPresenca('${pessoa.id}', true)">↩️</button>
+                    </div>
+                `;
+                li.innerHTML = infoHtml + botoesHtml;
                 ulPresentes.appendChild(li);
             } else {
                 contadorPendentes++;
-                li.innerHTML = conteudoItem + `<button class="btn-check" style="border-color: #28a745; color:#28a745" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>`;
+                botoesHtml = `
+                    <div class="acoes-btn">
+                        <button class="btn-edit" onclick="abrirModalEdicao('${pessoa.id}')">✏️</button>
+                        <button class="btn-check btn-check-green" onclick="alterarPresenca('${pessoa.id}', false)">✔</button>
+                    </div>
+                `;
+                li.innerHTML = infoHtml + botoesHtml;
                 ulPendentes.appendChild(li);
             }
         });
@@ -219,11 +249,11 @@
         document.getElementById('btnPendentes').innerText = `Convidados (${contadorPendentes})`;
         document.getElementById('btnPresentes').innerText = `Presentes Confirmados (${contadorPresentes})`;
 
-        if(ulPendentes.innerHTML === "") ulPendentes.innerHTML = '<p style="text-align:center; color:#ccc">Nenhum convidado pendente.</p>';
-        if(ulPresentes.innerHTML === "") ulPresentes.innerHTML = '<p style="text-align:center; color:#ccc">Ninguém confirmado ainda.</p>';
+        if(ulPendentes.innerHTML === "") ulPendentes.innerHTML = '<p style="text-align:center; color:#ccc">Vazio.</p>';
+        if(ulPresentes.innerHTML === "") ulPresentes.innerHTML = '<p style="text-align:center; color:#ccc">Vazio.</p>';
     }
 
-    // --- 4. FUNÇÕES DE INTERAÇÃO ---
+    // --- 4. FUNÇÕES BÁSICAS ---
     function alterarPresenca(id, statusAtual) {
         db.ref('convidados/' + id).update({ presente: !statusAtual });
     }
@@ -242,7 +272,7 @@
 
         document.getElementById('novoNome').value = "";
         document.getElementById('novoTelefone').value = "";
-        alert("Cadastrado! Veja na aba 'Presentes Confirmados'.");
+        alert("Cadastrado!");
         abrirAba('abaPresentes'); 
     }
 
@@ -263,7 +293,65 @@
         if(nomeAba === 'abaCadastro') botoes[2].classList.add('active');
     }
 
-    // --- 5. GERAR EXCEL ---
+    // --- 5. LÓGICA DE EDIÇÃO (MODAL) ---
+    
+    // Abre a janelinha com os dados atuais
+    function abrirModalEdicao(id) {
+        // Acha a pessoa na nossa lista local
+        let pessoa = listaLocal.find(p => p.id === id);
+        
+        if (pessoa) {
+            // Preenche os campos da janela
+            document.getElementById('editId').value = id;
+            document.getElementById('editNome').value = pessoa.nome;
+            document.getElementById('editResponsavel').value = pessoa.responsavel;
+            document.getElementById('editTelefone').value = pessoa.telefone;
+            document.getElementById('editGA').value = pessoa.ga === "-" ? "" : pessoa.ga;
+            
+            // Mostra a janela
+            document.getElementById('modalEditar').style.display = "flex";
+        }
+    }
+
+    // Fecha a janelinha
+    function fecharModal() {
+        document.getElementById('modalEditar').style.display = "none";
+    }
+
+    // Salva no Firebase
+    function salvarEdicao() {
+        let id = document.getElementById('editId').value;
+        let nome = document.getElementById('editNome').value;
+        let responsavel = document.getElementById('editResponsavel').value;
+        let telefone = document.getElementById('editTelefone').value;
+        let ga = document.getElementById('editGA').value;
+
+        if(nome.trim() === "") { alert("O nome não pode ficar vazio."); return; }
+
+        // Atualiza no banco
+        db.ref('convidados/' + id).update({
+            nome: nome,
+            responsavel: responsavel,
+            telefone: telefone,
+            ga: ga
+        }, (error) => {
+            if (error) {
+                alert("Erro ao salvar: " + error.message);
+            } else {
+                fecharModal(); // Fecha a janela se deu certo
+            }
+        });
+    }
+
+    // Fecha o modal se clicar fora da caixinha branca
+    window.onclick = function(event) {
+        let modal = document.getElementById('modalEditar');
+        if (event.target == modal) {
+            fecharModal();
+        }
+    }
+
+    // --- 6. GERAR EXCEL ---
     function gerarRelatorioExcel() {
         let dadosParaExcel = listaLocal.map(p => ({
             "Nome do Convidado": p.nome,
