@@ -35,7 +35,7 @@
         ul { list-style-type: none; padding: 0; margin: 0; }
         li { background: #fff; border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        .info-pessoa { display: flex; flex-direction: column; flex: 1; padding-right: 10px;} /* Flex 1 para ocupar espaço sobrando */
+        .info-pessoa { display: flex; flex-direction: column; flex: 1; padding-right: 10px;}
         .nome-convidado { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 4px; }
         
         .linha-detalhes { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #666; }
@@ -44,7 +44,6 @@
         .badge-ga { background-color: #e9ecef; color: #495057; }
         .badge-tel { background-color: #e3f2fd; color: #0d6efd; border-color: #b6d4fe; }
 
-        /* Grupo de Botoes na Lista (Ações) */
         .acoes-btn { display: flex; gap: 8px; align-items: center; }
 
         .btn-check, .btn-edit {
@@ -54,16 +53,14 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; transition: 0.2s;
         }
-        .btn-edit { border-color: #ffc107; color: #d39e00; font-size: 16px; } /* Botão Lápis Amarelo */
+        .btn-edit { border-color: #ffc107; color: #d39e00; font-size: 16px; } 
         .btn-undo { border-color: #dc3545; color: #dc3545; }
         .btn-check-green { border-color: #28a745; color: #28a745; }
         
         /* --- MODAL (JANELA DE EDIÇÃO) --- */
         .modal {
-            display: none; /* Escondido por padrão */
-            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); /* Fundo preto transparente */
-            align-items: center; justify-content: center;
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;
         }
         .modal-content {
             background-color: white; padding: 20px; border-radius: 12px;
@@ -118,18 +115,15 @@
 <div id="modalEditar" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0; color:#333">✏️ Editar Convidado</h3>
-        <input type="hidden" id="editId"> <label style="font-size:12px; color:#666">Nome do Convidado</label>
+        <input type="hidden" id="editId"> 
+        <label style="font-size:12px; color:#666">Nome do Convidado</label>
         <input type="text" id="editNome">
-        
         <label style="font-size:12px; color:#666">Responsável</label>
         <input type="text" id="editResponsavel">
-        
         <label style="font-size:12px; color:#666">Telefone</label>
         <input type="tel" id="editTelefone">
-        
         <label style="font-size:12px; color:#666">G.A.</label>
         <input type="text" id="editGA">
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
             <button class="btn-save" onclick="salvarEdicao()">Salvar Alterações</button>
@@ -168,12 +162,22 @@
         if (snapshot.exists()) {
             snapshot.forEach((childSnapshot) => {
                 let dados = childSnapshot.val();
+                
+                // --- CORREÇÃO AQUI ---
+                // Verifica se está escrito 'telefone' OU 'Telefone' OU 'celular' (por precaução)
+                let telefoneEncontrado = dados.telefone || dados.Telefone || dados.celular || dados.Celular || "";
+                
+                // Mesma verificação para os outros campos, por garantia
+                let nomeEncontrado = dados.nome || dados.Nome || "Sem Nome";
+                let responsavelEncontrado = dados.responsavel || dados.Responsavel || dados.Responsável || "-";
+                let gaEncontrado = dados.ga || dados.GA || dados.Ga || "-";
+
                 listaLocal.push({
                     id: childSnapshot.key,
-                    nome: dados.nome || "Sem Nome",
-                    responsavel: dados.responsavel || "-",
-                    telefone: dados.telefone || "",
-                    ga: dados.ga || "-",
+                    nome: nomeEncontrado,
+                    responsavel: responsavelEncontrado,
+                    telefone: telefoneEncontrado,
+                    ga: gaEncontrado,
                     presente: dados.presente || false
                 });
             });
@@ -186,7 +190,7 @@
         document.getElementById('status').innerText = "🔴 Erro de Conexão";
     });
 
-    // --- 3. RENDERIZAR LISTAS (Agora com Telefone e Botão Editar) ---
+    // --- 3. RENDERIZAR LISTAS ---
     function renderizarTodasListas() {
         let ulPendentes = document.getElementById('listaPendentes');
         let ulPresentes = document.getElementById('listaPresentes');
@@ -204,11 +208,17 @@
 
             let li = document.createElement('li');
             
-            // Tratamento visual para o telefone
-            let htmlTelefone = pessoa.telefone ? `<span class="badge badge-tel">📞 ${pessoa.telefone}</span>` : "";
-            let htmlGA = pessoa.ga !== "-" ? `<span class="badge badge-ga">GA: ${pessoa.ga}</span>` : "";
+            // Renderiza o telefone se existir
+            let htmlTelefone = "";
+            if(pessoa.telefone && pessoa.telefone !== "") {
+                htmlTelefone = `<span class="badge badge-tel">📞 ${pessoa.telefone}</span>`;
+            }
 
-            // HTML DA INFORMAÇÃO
+            let htmlGA = "";
+            if(pessoa.ga && pessoa.ga !== "-" && pessoa.ga !== "") {
+                htmlGA = `<span class="badge badge-ga">GA: ${pessoa.ga}</span>`;
+            }
+
             let infoHtml = `
                 <div class="info-pessoa">
                     <span class="nome-convidado">${pessoa.nome}</span>
@@ -220,9 +230,7 @@
                 </div>
             `;
 
-            // BOTÕES DE AÇÃO (EDITAR + CHECK)
             let botoesHtml = "";
-            
             if (pessoa.presente) {
                 contadorPresentes++;
                 botoesHtml = `
@@ -253,7 +261,7 @@
         if(ulPresentes.innerHTML === "") ulPresentes.innerHTML = '<p style="text-align:center; color:#ccc">Vazio.</p>';
     }
 
-    // --- 4. FUNÇÕES BÁSICAS ---
+    // --- FUNÇÕES DE LÓGICA ---
     function alterarPresenca(id, statusAtual) {
         db.ref('convidados/' + id).update({ presente: !statusAtual });
     }
@@ -293,74 +301,44 @@
         if(nomeAba === 'abaCadastro') botoes[2].classList.add('active');
     }
 
-    // --- 5. LÓGICA DE EDIÇÃO (MODAL) ---
-    
-    // Abre a janelinha com os dados atuais
+    // --- EDITAR ---
     function abrirModalEdicao(id) {
-        // Acha a pessoa na nossa lista local
         let pessoa = listaLocal.find(p => p.id === id);
-        
         if (pessoa) {
-            // Preenche os campos da janela
             document.getElementById('editId').value = id;
             document.getElementById('editNome').value = pessoa.nome;
             document.getElementById('editResponsavel').value = pessoa.responsavel;
             document.getElementById('editTelefone').value = pessoa.telefone;
             document.getElementById('editGA').value = pessoa.ga === "-" ? "" : pessoa.ga;
-            
-            // Mostra a janela
             document.getElementById('modalEditar').style.display = "flex";
         }
     }
-
-    // Fecha a janelinha
     function fecharModal() {
         document.getElementById('modalEditar').style.display = "none";
     }
-
-    // Salva no Firebase
     function salvarEdicao() {
         let id = document.getElementById('editId').value;
         let nome = document.getElementById('editNome').value;
         let responsavel = document.getElementById('editResponsavel').value;
         let telefone = document.getElementById('editTelefone').value;
         let ga = document.getElementById('editGA').value;
+        if(nome.trim() === "") { alert("Nome obrigatório."); return; }
 
-        if(nome.trim() === "") { alert("O nome não pode ficar vazio."); return; }
-
-        // Atualiza no banco
+        // Salva tudo minúsculo para padronizar daqui pra frente
         db.ref('convidados/' + id).update({
-            nome: nome,
-            responsavel: responsavel,
-            telefone: telefone,
-            ga: ga
+            nome: nome, responsavel: responsavel, telefone: telefone, ga: ga
         }, (error) => {
-            if (error) {
-                alert("Erro ao salvar: " + error.message);
-            } else {
-                fecharModal(); // Fecha a janela se deu certo
-            }
+            if (!error) fecharModal();
         });
     }
-
-    // Fecha o modal se clicar fora da caixinha branca
     window.onclick = function(event) {
-        let modal = document.getElementById('modalEditar');
-        if (event.target == modal) {
-            fecharModal();
-        }
+        if (event.target == document.getElementById('modalEditar')) fecharModal();
     }
 
-    // --- 6. GERAR EXCEL ---
     function gerarRelatorioExcel() {
         let dadosParaExcel = listaLocal.map(p => ({
-            "Nome do Convidado": p.nome,
-            "Responsável": p.responsavel,
-            "G.A.": p.ga,
-            "Telefone": p.telefone,
-            "Status": p.presente ? "Confirmado" : "Pendente"
+            "Nome do Convidado": p.nome, "Responsável": p.responsavel, "G.A.": p.ga, "Telefone": p.telefone, "Status": p.presente ? "Confirmado" : "Pendente"
         }));
-
         const ws = XLSX.utils.json_to_sheet(dadosParaExcel);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Lista de Igreja");
